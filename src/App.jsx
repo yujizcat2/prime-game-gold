@@ -83,6 +83,15 @@ export default function App() {
           return;
         }
 
+        const processResult =
+          first.kind === 'normal' &&
+          card.kind === 'normal'
+            ? processCards(
+                first,
+                card
+              )
+            : null;
+
         result[index] = {
           add:
             game.board.some(
@@ -95,12 +104,16 @@ export default function App() {
             ),
 
           process:
-            first.kind === 'normal' &&
-            card.kind === 'normal' &&
-            gcd(
-              first.value,
-              card.value
-            ) > 1,
+            Boolean(
+              processResult
+            ),
+
+          collect:
+            Boolean(
+              processResult
+                ?.collections
+                ?.length
+            ),
 
           absorb:
             canAbsorb(

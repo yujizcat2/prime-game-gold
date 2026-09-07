@@ -1,0 +1,423 @@
+/*
+ * Prime Game Gold
+ * 收藏状态视觉强化
+ *
+ * 导入顺序：
+ * import './styles.css';
+ * import './mobile.css';
+ * import './game-ui-refresh.css';
+ * import './collection-card-state.css';
+ */
+
+/* ------------------------------------------------------------
+   共同：角标本身先变成真正的“状态标记”
+   ------------------------------------------------------------ */
+
+.board-piece-collection-marker {
+  position: absolute;
+  top: 9px;
+  right: 10px;
+  z-index: 18;
+
+  display: grid;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  place-items: center;
+
+  border: 1px solid rgba(31, 40, 36, 0.10);
+  border-radius: 9px;
+
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow:
+    0 2px 7px rgba(31, 40, 36, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78);
+
+  font-size: 18px;
+  font-weight: 950;
+  line-height: 1;
+  letter-spacing: -0.03em;
+
+  pointer-events: none;
+}
+
+/* ×：同属性同数字已经收藏 */
+.board-piece-collection-marker--exact {
+  color: #56615c;
+  background: rgba(234, 237, 235, 0.96);
+  border-color: rgba(73, 84, 78, 0.16);
+}
+
+/* △：同数字其它属性已经收藏 */
+.board-piece-collection-marker--related {
+  color: var(--material-primary);
+  background: color-mix(
+    in srgb,
+    var(--material-surface) 82%,
+    white
+  );
+  border-color: color-mix(
+    in srgb,
+    var(--material-primary) 20%,
+    transparent
+  );
+}
+
+
+/* ------------------------------------------------------------
+   × 已收藏：整张卡进入“已完成 / 低优先级”状态
+   ------------------------------------------------------------ */
+
+.board-piece:has(
+  .board-piece-collection-marker--exact
+):not(.board-piece--selected) {
+  --material-primary: #68716d;
+  --material-secondary: #9ca49f;
+
+  background-color: #eef0ef;
+  background-image:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.66),
+      rgba(86, 97, 92, 0.055)
+    );
+
+  border-color: rgba(71, 82, 76, 0.12);
+
+  box-shadow:
+    0 1px 0 rgba(31, 40, 36, 0.05),
+    0 3px 8px rgba(31, 40, 36, 0.035);
+
+  filter: saturate(0.22);
+}
+
+/* 数字直接进入次要层级 */
+.board-piece:has(
+  .board-piece-collection-marker--exact
+):not(.board-piece--selected)
+.board-piece-number {
+  color: #68716d;
+  opacity: 0.62;
+  font-weight: 900;
+}
+
+/* 属性名称也一起降级 */
+.board-piece:has(
+  .board-piece-collection-marker--exact
+):not(.board-piece--selected)
+.board-piece-attribute {
+  color: #79827e;
+  opacity: 0.68;
+}
+
+/* 来源进一步弱化 */
+.board-piece:has(
+  .board-piece-collection-marker--exact
+):not(.board-piece--selected)
+.board-piece-source {
+  opacity: 0.42;
+}
+
+/* 左侧材质条同步失活 */
+.board-piece:has(
+  .board-piece-collection-marker--exact
+):not(.board-piece--selected)
+.board-piece-type-bar {
+  background: #9ba39f;
+  opacity: 0.62;
+}
+
+
+/* ------------------------------------------------------------
+   △ 同数字已见：仍然有价值，但视觉略低于全新收藏
+   ------------------------------------------------------------ */
+
+.board-piece:has(
+  .board-piece-collection-marker--related
+):not(.board-piece--selected) {
+  filter: saturate(0.68);
+
+  border-color: color-mix(
+    in srgb,
+    var(--material-primary) 13%,
+    rgba(31, 40, 36, 0.07)
+  );
+
+  box-shadow:
+    0 2px 0 rgba(31, 40, 36, 0.055),
+    0 4px 10px rgba(31, 40, 36, 0.05);
+}
+
+/* △ 卡数字保持清晰，但不像未收藏那么“新鲜” */
+.board-piece:has(
+  .board-piece-collection-marker--related
+):not(.board-piece--selected)
+.board-piece-number {
+  opacity: 0.82;
+}
+
+/* △ 卡属性略弱 */
+.board-piece:has(
+  .board-piece-collection-marker--related
+):not(.board-piece--selected)
+.board-piece-attribute {
+  opacity: 0.78;
+}
+
+
+/* ------------------------------------------------------------
+   选中状态永远优先
+   收藏标记保留，但卡片重新恢复清晰度
+   ------------------------------------------------------------ */
+
+.board-piece--selected:has(
+  .board-piece-collection-marker
+) {
+  filter: none;
+}
+
+.board-piece--selected
+.board-piece-collection-marker {
+  color: var(--material-primary);
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(255, 255, 255, 0.46);
+  box-shadow:
+    0 2px 9px rgba(15, 23, 42, 0.16);
+}
+
+.board-piece--selected
+.board-piece-number,
+.board-piece--selected
+.board-piece-attribute,
+.board-piece--selected
+.board-piece-source,
+.board-piece--selected
+.board-piece-type-bar {
+  opacity: 1;
+}
+
+
+/* ------------------------------------------------------------
+   候选操作也必须能盖过收藏弱化状态
+   ------------------------------------------------------------ */
+
+.board-piece--combine-candidate,
+.board-piece--reduce-candidate,
+.board-piece--absorb-candidate {
+  filter: none;
+}
+
+
+/* ------------------------------------------------------------
+   手机
+   ------------------------------------------------------------ */
+
+@media (max-width: 560px) {
+  .board-piece-collection-marker {
+    top: 7px;
+    right: 7px;
+
+    min-width: 23px;
+    height: 23px;
+    padding: 0 5px;
+
+    border-radius: 8px;
+
+    font-size: 16px;
+  }
+
+  /* × 卡在手机上再明显一点，
+     因为小屏更依赖整体明暗而不是细节文字 */
+  .board-piece:has(
+    .board-piece-collection-marker--exact
+  ):not(.board-piece--selected)
+  .board-piece-number {
+    opacity: 0.57;
+  }
+}
+
+@media (max-width: 380px) {
+  .board-piece-collection-marker {
+    top: 6px;
+    right: 6px;
+    min-width: 21px;
+    height: 21px;
+    font-size: 15px;
+  }
+}
+/* ------------------------------------------------------------
+   潜在动作候选：整张卡使用不同颜色边框
+   右上角符号保留，但不再作为唯一提示
+   ------------------------------------------------------------ */
+
+/* ＋ 相加候选：暖金色 */
+.board-piece--combine-candidate {
+  border: 2px solid rgba(202, 145, 45, 0.92) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 235, 190, 0.62),
+    0 0 0 3px rgba(202, 145, 45, 0.14),
+    0 7px 18px rgba(145, 92, 17, 0.12) !important;
+}
+
+/* ÷ 处理候选：清冷青绿色 */
+.board-piece--reduce-candidate {
+  border: 2px solid rgba(48, 145, 129, 0.92) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(202, 244, 236, 0.60),
+    0 0 0 3px rgba(48, 145, 129, 0.14),
+    0 7px 18px rgba(31, 104, 91, 0.11) !important;
+}
+
+/* ◉ 吸收候选：紫色
+   先保留兼容；如果后续彻底删除吸收系统，这段一起删除即可。 */
+.board-piece--absorb-candidate {
+  border: 2px solid rgba(112, 89, 174, 0.92) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(230, 220, 255, 0.62),
+    0 0 0 3px rgba(112, 89, 174, 0.14),
+    0 7px 18px rgba(71, 52, 126, 0.11) !important;
+}
+
+/* 如果某张卡同时属于多个候选，采用双层提示，
+   避免其中一种状态完全覆盖另一种。 */
+.board-piece--combine-candidate.board-piece--reduce-candidate {
+  border-color: rgba(65, 135, 120, 0.95) !important;
+  box-shadow:
+    inset 0 0 0 2px rgba(202, 145, 45, 0.58),
+    0 0 0 3px rgba(48, 145, 129, 0.18),
+    0 7px 18px rgba(31, 40, 36, 0.11) !important;
+}
+
+/* 收藏状态不能把候选边框压暗 */
+.board-piece--combine-candidate:has(
+  .board-piece-collection-marker
+),
+.board-piece--reduce-candidate:has(
+  .board-piece-collection-marker
+),
+.board-piece--absorb-candidate:has(
+  .board-piece-collection-marker
+) {
+  filter: none !important;
+}
+
+/* 右上角动作符号同步增强 */
+.board-piece--combine-candidate .marker-add {
+  background: rgba(255, 247, 226, 0.98);
+  color: #a96912;
+  box-shadow: 0 0 0 1px rgba(202, 145, 45, 0.28);
+}
+
+.board-piece--reduce-candidate .marker-process {
+  background: rgba(229, 247, 243, 0.98);
+  color: #277f70;
+  box-shadow: 0 0 0 1px rgba(48, 145, 129, 0.28);
+}
+
+.board-piece--absorb-candidate .marker-absorb {
+  background: rgba(242, 237, 255, 0.98);
+  color: #624c9f;
+  box-shadow: 0 0 0 1px rgba(112, 89, 174, 0.28);
+}
+
+/* 手机上边框稍微收敛，但仍明显 */
+@media (max-width: 560px) {
+  .board-piece--combine-candidate,
+  .board-piece--reduce-candidate,
+  .board-piece--absorb-candidate {
+    border-width: 2px !important;
+  }
+}
+/* ------------------------------------------------------------
+   ★ 可直接消除并获得收藏
+   这是比普通“处理”更高一级的候选状态。
+   用亮金白双层边框强调，但仍允许与 + / ÷ 同时叠加。
+   ------------------------------------------------------------ */
+
+.board-piece--collection-candidate {
+  border: 2px solid rgba(218, 173, 63, 0.98) !important;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 250, 224, 0.94),
+    0 0 0 4px rgba(218, 173, 63, 0.22),
+    0 8px 20px rgba(151, 108, 22, 0.14) !important;
+  filter: none !important;
+}
+
+/* 收藏候选角标 */
+.marker-collect {
+  background: rgba(255, 249, 220, 0.98) !important;
+  color: #9e7215 !important;
+  box-shadow:
+    0 0 0 1px rgba(218, 173, 63, 0.34),
+    0 2px 7px rgba(141, 100, 20, 0.12);
+}
+
+/*
+ * 多动作叠加原则：
+ * - 最外层：收藏机会（金）
+ * - 中层：处理（青绿）
+ * - 内层：相加（暖金）
+ *
+ * 同一张卡同时支持多种动作时，
+ * 用多重 ring 明确“它不是单一动作候选”。
+ */
+
+/* 收藏 + 处理 */
+.board-piece--collection-candidate.board-piece--reduce-candidate {
+  border-color: rgba(218, 173, 63, 0.98) !important;
+  box-shadow:
+    inset 0 0 0 2px rgba(48, 145, 129, 0.72),
+    0 0 0 3px rgba(255, 250, 224, 0.96),
+    0 0 0 6px rgba(218, 173, 63, 0.22),
+    0 8px 20px rgba(31, 40, 36, 0.12) !important;
+}
+
+/* 收藏 + 相加 */
+.board-piece--collection-candidate.board-piece--combine-candidate {
+  border-color: rgba(218, 173, 63, 0.98) !important;
+  box-shadow:
+    inset 0 0 0 2px rgba(202, 145, 45, 0.72),
+    0 0 0 3px rgba(255, 250, 224, 0.96),
+    0 0 0 6px rgba(218, 173, 63, 0.22),
+    0 8px 20px rgba(31, 40, 36, 0.12) !important;
+}
+
+/* 相加 + 处理（无收藏） */
+.board-piece--combine-candidate.board-piece--reduce-candidate:not(
+  .board-piece--collection-candidate
+) {
+  border-color: rgba(48, 145, 129, 0.96) !important;
+  box-shadow:
+    inset 0 0 0 2px rgba(202, 145, 45, 0.70),
+    0 0 0 4px rgba(48, 145, 129, 0.18),
+    0 8px 18px rgba(31, 40, 36, 0.11) !important;
+}
+
+/* 收藏 + 相加 + 处理：三层全部显示 */
+.board-piece--collection-candidate.board-piece--combine-candidate.board-piece--reduce-candidate {
+  border-color: rgba(218, 173, 63, 1) !important;
+  box-shadow:
+    inset 0 0 0 2px rgba(202, 145, 45, 0.82),
+    inset 0 0 0 5px rgba(48, 145, 129, 0.70),
+    0 0 0 3px rgba(255, 252, 235, 0.98),
+    0 0 0 7px rgba(218, 173, 63, 0.24),
+    0 9px 22px rgba(31, 40, 36, 0.13) !important;
+}
+
+/* 手机保持清楚但减少外扩，防止九宫格显拥挤 */
+@media (max-width: 560px) {
+  .board-piece--collection-candidate {
+    box-shadow:
+      inset 0 0 0 2px rgba(255, 250, 224, 0.94),
+      0 0 0 3px rgba(218, 173, 63, 0.22),
+      0 6px 14px rgba(151, 108, 22, 0.12) !important;
+  }
+
+  .board-piece--collection-candidate.board-piece--combine-candidate.board-piece--reduce-candidate {
+    box-shadow:
+      inset 0 0 0 2px rgba(202, 145, 45, 0.82),
+      inset 0 0 0 4px rgba(48, 145, 129, 0.66),
+      0 0 0 3px rgba(255, 252, 235, 0.98),
+      0 0 0 5px rgba(218, 173, 63, 0.22) !important;
+  }
+}

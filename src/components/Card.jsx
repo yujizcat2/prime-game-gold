@@ -46,6 +46,7 @@ export default function Card({
     selectedRole ? 'board-piece--selected' : '',
     candidate?.add ? 'board-piece--combine-candidate' : '',
     candidate?.process ? 'board-piece--reduce-candidate' : '',
+    candidate?.collect ? 'board-piece--collection-candidate' : '',
     candidate?.absorb ? 'board-piece--absorb-candidate' : '',
     isSource ? 'board-piece--combine-source' : '',
     isCompress ? 'board-piece--reduce-compress' : '',
@@ -165,6 +166,7 @@ export default function Card({
       {(
         candidate?.add ||
         candidate?.process ||
+        candidate?.collect ||
         candidate?.absorb
       ) && (
         <span className="candidate-markers">
@@ -177,6 +179,15 @@ export default function Card({
           {candidate.process && (
             <i className="marker-process">
               ÷
+            </i>
+          )}
+
+          {candidate.collect && (
+            <i
+              className="marker-collect"
+              aria-label="处理后可获得收藏"
+            >
+              ★
             </i>
           )}
 

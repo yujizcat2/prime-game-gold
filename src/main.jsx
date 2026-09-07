@@ -4,6 +4,7 @@ import App from './App.jsx';
 import './styles.css';
 import './mobile.css';
 import './game-ui-refresh.css';
+import './collection-card-state.css';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode><App /></React.StrictMode>,
