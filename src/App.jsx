@@ -695,6 +695,9 @@ export default function App() {
               animation={
                 animation
               }
+              collection={
+                game.collection
+              }
               onSelect={
                 select
               }
