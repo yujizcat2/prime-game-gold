@@ -1,0 +1,147 @@
+@media (max-width: 560px) {
+  .game-page {
+    padding: 12px 6px 40px;
+  }
+
+  .hud {
+    padding: 0 8px;
+    font-size: 10px;
+  }
+
+  .hud b {
+    font-size: 11px;
+  }
+
+  .game-info-row {
+    min-height: 72px;
+    padding: 8px 11px;
+  }
+
+  .action-hint {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .action-hint-selection {
+    gap: 4px;
+    padding: 0;
+  }
+
+  .action-hint-selection strong {
+    font-size: 13px;
+  }
+
+  .action-hint-options {
+    min-height: 22px;
+    padding: 4px 0 0;
+    border-top: 1px solid rgba(91, 119, 104, .1);
+    border-left: 0;
+  }
+
+  .action-hint-options span {
+    font-size: 9px;
+  }
+
+  .game-board {
+    padding: 10px 0 10px;
+    border-radius: 24px;
+  }
+
+  .board {
+    width: 100%;
+    max-width: 378px;
+    aspect-ratio: 1;
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+    padding: 5px;
+    border-radius: 21px;
+  }
+
+  .board-cell,
+  .board-piece-wrapper,
+  .board-piece {
+    height: 100%;
+    min-height: 0;
+    border-radius: 18px;
+  }
+
+  .board-piece::before {
+    inset: 4px;
+    border-radius: 14px;
+  }
+
+  .board-piece-type-bar {
+    top: 12px;
+    bottom: 12px;
+    left: 8px;
+    width: 4px;
+  }
+
+  .board-piece-number {
+    top: 16px;
+    left: 20px;
+    font-size: clamp(29px, 9.5vw, 36px);
+  }
+
+  .board-piece-attribute {
+    right: 12px;
+    bottom: 27px;
+    font-size: 12px;
+  }
+
+  .board-piece-source {
+    right: 12px;
+    bottom: 13px;
+    left: 16px;
+    font-size: 8px;
+  }
+
+  .board-piece-selection-role {
+    top: 6px;
+    padding: 2px 5px;
+    font-size: 8px;
+  }
+
+  .candidate-markers {
+    top: 4px;
+    right: 4px;
+  }
+
+  .candidate-markers i {
+    min-width: 13px;
+    height: 13px;
+    font-size: 9px;
+  }
+
+  .board-preview-action {
+    bottom: 36px;
+    padding: 3px 7px;
+    font-size: 8px;
+  }
+
+  .game-board-actions {
+    width: 100%;
+    max-width: 378px;
+    gap: 7px;
+    margin-top: 6px;
+  }
+
+  .action-button {
+    min-height: 44px;
+    border-radius: 13px;
+    font-size: 12px;
+  }
+
+  .action-button span {
+    font-size: 16px;
+  }
+
+  .collection-overlay {
+    padding: 12px;
+  }
+
+  .collection-dialog {
+    padding: 16px;
+    border-radius: 20px;
+  }
+}
