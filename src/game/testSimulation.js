@@ -1,6 +1,7 @@
 import { ATTRIBUTE_NAMES } from './constants.js';
 import { getNumberCollectionState, isCardToxic } from './collectionState.js';
 import { createInitialState } from './state.js';
+import { getBoardActionOpportunities } from './actionOpportunities.js';
 import {
   absorb,
   addNormalToBoard,
@@ -1908,7 +1909,24 @@ export function runTestGame({
       ),
 
     history: [],
+
+    telemetry: [],
   };
+
+  function recordTelemetry() {
+    const opportunities = getBoardActionOpportunities(state.board, state);
+    stats.telemetry.push({
+      step: state.steps,
+      currentScore: state.score,
+      currentSpeed: state.steps === 0 ? 0 : state.score / state.steps,
+      combineOpportunities: opportunities.combine,
+      reduceOpportunities: opportunities.reduce,
+      collectOpportunities: opportunities.collect,
+      totalActionOpportunities: opportunities.combine + opportunities.reduce,
+    });
+  }
+
+  recordTelemetry();
 
 
   while (
@@ -1958,6 +1976,8 @@ export function runTestGame({
 
     state =
       outcome.state;
+
+    recordTelemetry();
 
     loopDetector.record(state, state.steps);
 
@@ -2035,6 +2055,18 @@ export function runTestGame({
       state.board
     );
 
+  const opportunitySamples = stats.telemetry.length;
+  const opportunityAverage = (field) => stats.telemetry.reduce(
+    (sum, sample) => sum + sample[field],
+    0
+  ) / opportunitySamples;
+  const totalOpportunities = stats.telemetry.map(
+    (sample) => sample.totalActionOpportunities
+  );
+  const firstSingleOpportunity = stats.telemetry.find(
+    (sample) => sample.totalActionOpportunities === 1
+  );
+
 
   return {
     mode,
@@ -2047,6 +2079,12 @@ export function runTestGame({
 
     score:
       state.score,
+
+    speed:
+      state.steps === 0 ? 0 : state.score / state.steps,
+
+    collectionSpeed:
+      state.steps === 0 ? 0 : stats.newCollections / state.steps,
 
     newCollections:
       stats.newCollections,
@@ -2098,10 +2136,31 @@ export function runTestGame({
     maxNumberSeen:
       stats.maxNumberSeen,
 
+    averageCombineOpportunities:
+      opportunityAverage('combineOpportunities'),
+
+    averageReduceOpportunities:
+      opportunityAverage('reduceOpportunities'),
+
+    averageCollectOpportunities:
+      opportunityAverage('collectOpportunities'),
+
+    averageTotalActionOpportunities:
+      opportunityAverage('totalActionOpportunities'),
+
+    minimumTotalActionOpportunities:
+      Math.min(...totalOpportunities),
+
+    firstSingleOpportunityStep:
+      firstSingleOpportunity?.step ?? null,
+
     endReason,
 
     history:
       stats.history,
+
+    telemetry:
+      stats.telemetry,
   };
 }
 
@@ -2150,6 +2209,16 @@ function average(
   );
 }
 
+function percentile(values, fraction) {
+  if (!values.length) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const position = (sorted.length - 1) * fraction;
+  const lower = Math.floor(position);
+  const upper = Math.ceil(position);
+  if (lower === upper) return sorted[lower];
+  return sorted[lower] + (sorted[upper] - sorted[lower]) * (position - lower);
+}
+
 
 export function summarizeTestResults(
   results
@@ -2175,6 +2244,7 @@ export function summarizeTestResults(
 
 
   const endReasons = {};
+  const steps = results.map((result) => result.steps);
 
 
   for (
@@ -2202,6 +2272,18 @@ export function summarizeTestResults(
         'steps'
       ),
 
+    medianSteps:
+      percentile(steps, 0.5),
+
+    p25Steps:
+      percentile(steps, 0.25),
+
+    p75Steps:
+      percentile(steps, 0.75),
+
+    p90Steps:
+      percentile(steps, 0.9),
+
     averageCollection:
       average(
         results,
@@ -2213,6 +2295,27 @@ export function summarizeTestResults(
         results,
         'score'
       ),
+
+    averageSpeed:
+      average(results, 'speed'),
+
+    averageCollectionSpeed:
+      average(results, 'collectionSpeed'),
+
+    averageCombineOpportunities:
+      average(results, 'averageCombineOpportunities'),
+
+    averageReduceOpportunities:
+      average(results, 'averageReduceOpportunities'),
+
+    averageCollectOpportunities:
+      average(results, 'averageCollectOpportunities'),
+
+    averageTotalActionOpportunities:
+      average(results, 'averageTotalActionOpportunities'),
+
+    averageMinimumTotalActionOpportunities:
+      average(results, 'minimumTotalActionOpportunities'),
 
     averageNew:
       average(

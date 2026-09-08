@@ -345,6 +345,11 @@ export default function TestLab({
                   </b>
                 </div>
 
+                <div><small>Step 中位数</small><b>{formatNumber(summary.medianSteps)}</b></div>
+                <div><small>Step P25</small><b>{formatNumber(summary.p25Steps)}</b></div>
+                <div><small>Step P75</small><b>{formatNumber(summary.p75Steps)}</b></div>
+                <div><small>Step P90</small><b>{formatNumber(summary.p90Steps)}</b></div>
+
                 <div>
                   <small>
                     平均收藏
@@ -367,6 +372,14 @@ export default function TestLab({
                     )}
                   </b>
                 </div>
+
+                <div><small>平均速度</small><b>{formatNumber(summary.averageSpeed, 2)}</b></div>
+                <div><small>平均收藏速度</small><b>{formatNumber(summary.averageCollectionSpeed, 3)}</b></div>
+                <div><small>平均搭配机会</small><b>{formatNumber(summary.averageCombineOpportunities)}</b></div>
+                <div><small>平均处理机会</small><b>{formatNumber(summary.averageReduceOpportunities)}</b></div>
+                <div><small>平均收藏机会</small><b>{formatNumber(summary.averageCollectOpportunities)}</b></div>
+                <div><small>平均总行动机会</small><b>{formatNumber(summary.averageTotalActionOpportunities)}</b></div>
+                <div><small>平均最低总行动机会</small><b>{formatNumber(summary.averageMinimumTotalActionOpportunities)}</b></div>
 
                 <div>
                   <small>
@@ -653,6 +666,15 @@ export default function TestLab({
                 Step{' '}
                 {selectedGame.steps}
               </span>
+
+              <span>速度 {formatNumber(selectedGame.speed, 2)}</span>
+              <span>收藏速度 {formatNumber(selectedGame.collectionSpeed, 3)}</span>
+              <span>平均搭配机会 {formatNumber(selectedGame.averageCombineOpportunities)}</span>
+              <span>平均处理机会 {formatNumber(selectedGame.averageReduceOpportunities)}</span>
+              <span>平均收藏机会 {formatNumber(selectedGame.averageCollectOpportunities)}</span>
+              <span>平均总行动机会 {formatNumber(selectedGame.averageTotalActionOpportunities)}</span>
+              <span>最低总行动机会 {selectedGame.minimumTotalActionOpportunities}</span>
+              <span>首次总行动机会 = 1：{selectedGame.firstSingleOpportunityStep ?? '—'}</span>
 
               <span>
                 新收藏{' '}

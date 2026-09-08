@@ -162,3 +162,64 @@ describe('Poison Collection AI', () => {
     expect(runTestGame({ mode: 'poison-collection', maxSteps: 1, random: () => 0 }).mode).toBe('poison-collection');
   });
 });
+
+describe('simulation telemetry reporting', () => {
+  it('records speed and authoritative action opportunities for every state', () => {
+    const result = runTestGame({ mode: 'poison-collection', maxSteps: 1, random: () => 0 });
+    expect(result.telemetry).toHaveLength(result.steps + 1);
+    expect(result.telemetry[0]).toMatchObject({
+      step: 0,
+      currentScore: 0,
+      currentSpeed: 0,
+    });
+    expect(result.telemetry[0].totalActionOpportunities).toBe(
+      result.telemetry[0].combineOpportunities + result.telemetry[0].reduceOpportunities
+    );
+    expect(result.speed).toBe(result.steps === 0 ? 0 : result.score / result.steps);
+    expect(result.collectionSpeed).toBe(
+      result.steps === 0 ? 0 : result.newCollections / result.steps
+    );
+  });
+
+  it('averages per-game speeds and reports step percentiles', () => {
+    const base = {
+      collection: 0,
+      newCollections: 0,
+      duplicates: 0,
+      toxicCreated: 0,
+      toxicRemoved: 0,
+      finalToxic: 0,
+      completedNumbers: 0,
+      combine: 0,
+      process: 0,
+      absorb: 0,
+      xCreated: 0,
+      finalBoardSum: 0,
+      averageBoardSum: 0,
+      maxNumberSeen: 0,
+      averageCombineOpportunities: 0,
+      averageReduceOpportunities: 0,
+      averageCollectOpportunities: 0,
+      averageTotalActionOpportunities: 0,
+      minimumTotalActionOpportunities: 0,
+      collectionSpeed: 0,
+      loops: {
+        functional: { firstLoop: null },
+        lineageStructure: { firstLoop: null },
+        lineageInstance: { firstLoop: null },
+        fullState: { firstLoop: null },
+      },
+      endReason: '步数上限',
+    };
+    const summary = summarizeTestResults([
+      { ...base, steps: 2, score: 20, speed: 10 },
+      { ...base, steps: 10, score: 20, speed: 2 },
+    ]);
+    expect(summary.averageSpeed).toBe(6);
+    expect(summary.averageSpeed).not.toBe(summary.averageScore / summary.averageSteps);
+    expect(summary.medianSteps).toBe(6);
+    expect(summary.p25Steps).toBe(4);
+    expect(summary.p75Steps).toBe(8);
+    expect(summary.p90Steps).toBeCloseTo(9.2);
+  });
+});
