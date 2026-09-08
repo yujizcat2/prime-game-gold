@@ -73,6 +73,19 @@ it('processes by GCD and collects the pre-process card that becomes 1', () => {
   expect(result.first.value).toBe(7); expect(result.second).toBeNull(); expect(result.collections[0]).toBe(b);
 });
 
+it('allows X and a normal card to process by GCD while preserving their kinds', () => {
+  const x = createXCard(12);
+  const normal = createNormalCard(8, 'B');
+  const result = processCards(x, normal);
+
+  expect(result.first).toMatchObject({ kind: 'x', value: 3, attribute: 'X' });
+  expect(result.second).toMatchObject({ kind: 'normal', value: 2, attribute: 'B' });
+  expect(processCards(normal, x)).toMatchObject({
+    first: { kind: 'normal', value: 2, attribute: 'B' },
+    second: { kind: 'x', value: 3, attribute: 'X' },
+  });
+});
+
 describe('toxic card processing', () => {
   const card = (value, attribute) => createNormalCard(value, attribute);
 

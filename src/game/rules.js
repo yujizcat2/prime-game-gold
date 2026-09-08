@@ -299,10 +299,13 @@ export function getProcessLegality(
     !a ||
     !b ||
     a.id === b.id ||
-    a.kind !== 'normal' ||
-    b.kind !== 'normal'
+    !(
+      (a.kind === 'normal' && b.kind === 'normal') ||
+      (a.kind === 'x' && b.kind === 'normal') ||
+      (a.kind === 'normal' && b.kind === 'x')
+    )
   ) {
-    return { allowed: false, reason: '只能处理两张不同的普通卡。' };
+    return { allowed: false, reason: '只能处理两张不同的普通卡，或琉璃与普通卡。' };
   }
 
   const divisor =

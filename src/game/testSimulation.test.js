@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { createNormalCard, resetCardIdsForTest } from './cards.js';
+import { createNormalCard, createXCard, resetCardIdsForTest } from './cards.js';
 import { getProcessLegality } from './rules.js';
 import {
   choosePoisonCollectionAction,
@@ -8,6 +8,7 @@ import {
   createBoardLineageStructureFingerprint,
   createFullSimulationFingerprint,
   createLoopDetector,
+  getLegalTestActions,
   runTestGame,
   scorePoisonCollectionAction,
   summarizeTestResults,
@@ -22,6 +23,18 @@ const stateWith = (board, collection = new Set()) => ({
   score: 0,
   steps: 0,
   life: 100,
+});
+
+it('includes both absorb and gcd process actions for an eligible X pair', () => {
+  const actions = getLegalTestActions(stateWith([
+    createXCard(120),
+    createNormalCard(8, 'A'),
+  ]));
+
+  expect(actions).toEqual(expect.arrayContaining([
+    expect.objectContaining({ type: 'absorb' }),
+    expect.objectContaining({ type: 'process' }),
+  ]));
 });
 
 describe('simulation fingerprints', () => {

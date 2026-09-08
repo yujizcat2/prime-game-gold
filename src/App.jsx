@@ -99,14 +99,11 @@ export default function App() {
         }
 
         const processResult =
-          first.kind === 'normal' &&
-          card.kind === 'normal'
-            ? processCards(
-                first,
-                card,
-                game.collection
-              )
-            : null;
+          processCards(
+            first,
+            card,
+            game.collection
+          );
 
         result[index] = {
           add:
@@ -157,6 +154,7 @@ export default function App() {
 
     const [first, second] = orderedSelectedCards;
     const [firstIndex, secondIndex] = orderedSelectedIndexes;
+    const [absorbFirst, absorbSecond] = selectedCards;
 
     const output = {};
 
@@ -206,24 +204,24 @@ export default function App() {
 
     if (
       canAbsorb(
-        first,
-        second
+        absorbFirst,
+        absorbSecond
       )
     ) {
       output.absorb =
-        first.value +
-          second.value >
+        absorbFirst.value +
+          absorbSecond.value >
         201
           ? `吸收 → ${
-              ATTRIBUTE_NAMES[second.attribute]
+              ATTRIBUTE_NAMES[absorbSecond.attribute]
             }${
-              first.value +
-              second.value -
+              absorbFirst.value +
+              absorbSecond.value -
               200
             }`
           : `吸收 → 琉璃 ${
-              first.value +
-              second.value
+              absorbFirst.value +
+              absorbSecond.value
             }`;
     }
 
@@ -407,6 +405,15 @@ export default function App() {
       game.selected.length !== 2
     ) {
       return;
+    }
+
+    if (
+      canAbsorb(
+        selectedCards[0],
+        selectedCards[1]
+      )
+    ) {
+      return runAbsorb();
     }
 
     const legality = getProcessLegality(
@@ -783,13 +790,15 @@ export default function App() {
                   `action-button ` +
                   `action-button--process ` +
                   `${
-                    preview?.process
+                    preview?.process ||
+                    preview?.absorb
                       ? 'is-active'
                       : ''
                   }`
                 }
                 disabled={
-                  !preview?.process ||
+                  (!preview?.process &&
+                    !preview?.absorb) ||
                   Boolean(
                     animation
                   )
@@ -805,32 +814,6 @@ export default function App() {
                 处理
               </button>
 
-              <button
-                className={
-                  `action-button ` +
-                  `action-button--absorb ` +
-                  `${
-                    preview?.absorb
-                      ? 'is-active'
-                      : ''
-                  }`
-                }
-                disabled={
-                  !preview?.absorb ||
-                  Boolean(
-                    animation
-                  )
-                }
-                onClick={
-                  runAbsorb
-                }
-              >
-                <span>
-                  ◉
-                </span>
-
-                吸收
-              </button>
             </div>
           </div>
         </section>
