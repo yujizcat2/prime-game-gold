@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import ActionPanel from './components/ActionPanel.jsx';
+import ActionOpportunities from './components/ActionOpportunities.jsx';
 import Board from './components/Board.jsx';
 import CollectionPanel from './components/CollectionPanel.jsx';
 import CombineHistoryPanel from './components/CombineHistoryPanel.jsx';
@@ -19,6 +20,7 @@ import {
 } from './game/rules.js';
 import { getNextSelection } from './game/selection.js';
 import { createCombineHistoryRecord } from './game/combineHistory.js';
+import { getBoardActionOpportunities } from './game/actionOpportunities.js';
 
 const replaceTwo = (board, i, first, j, second) =>
   board.map((card, index) =>
@@ -51,6 +53,11 @@ export default function App() {
       .map((index) => game.board[index])
       .filter(Boolean),
     [game.board, orderedSelectedIndexes]
+  );
+
+  const actionOpportunities = useMemo(
+    () => getBoardActionOpportunities(game.board, game),
+    [game.board, game.collection, game.usedPairs]
   );
 
   const later = (callback, delay) => {
@@ -693,6 +700,8 @@ export default function App() {
         <Hud
           game={game}
         />
+
+        <ActionOpportunities opportunities={actionOpportunities} />
 
         <section className="game-info-row">
           <ActionPanel

@@ -253,6 +253,49 @@ body {
   font-weight: 900;
 }
 
+.action-opportunities {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 42px;
+  margin-top: 8px;
+  padding: 0 18px;
+  border: 1px solid var(--pg-line);
+  border-radius: 15px;
+  background: rgba(255,255,255,.6);
+  color: var(--pg-muted);
+  font-size: 10px;
+  backdrop-filter: blur(10px);
+}
+
+.action-opportunities-title {
+  color: #46564e;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.action-opportunities-items {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  text-align: center;
+}
+
+.action-opportunities-items span {
+  white-space: nowrap;
+}
+
+.action-opportunities-items b {
+  margin-left: 3px;
+  color: #2d3d35;
+  font-size: 14px;
+}
+
+.action-opportunities-items .is-empty {
+  opacity: .42;
+}
+
 .game-info-row {
   min-height: 70px;
   margin-top: 8px;
@@ -522,6 +565,26 @@ body {
   }
 
   .hud b {
+    font-size: 12px;
+  }
+
+  .action-opportunities {
+    min-height: 38px;
+    margin-top: 6px;
+    padding: 0 11px;
+    gap: 8px;
+    font-size: 9px;
+  }
+
+  .action-opportunities-title {
+    font-size: 10px;
+  }
+
+  .action-opportunities-items {
+    gap: 3px;
+  }
+
+  .action-opportunities-items b {
     font-size: 12px;
   }
 
