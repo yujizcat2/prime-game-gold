@@ -38,7 +38,7 @@ function cardLabel(card) {
   }
 
   if (card.kind === 'x') {
-    return `熔体${card.value}`;
+    return `琉璃${card.value}`;
   }
 
   return (

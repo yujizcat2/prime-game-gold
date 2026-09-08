@@ -1,5 +1,5 @@
 import {
-  ADDITION_ATTRIBUTE,
+  getMaterialResult,
   MAX_NORMAL_VALUE,
   X_WRAP_AMOUNT,
   X_WRAP_THRESHOLD,
@@ -114,7 +114,7 @@ export function addNormalCards(
     );
 
   /*
-   * 超过101生成熔体。
+   * 超过101生成琉璃。
    */
   if (
     value >
@@ -133,11 +133,10 @@ export function addNormalCards(
   return createNormalCard(
     value,
 
-    ADDITION_ATTRIBUTE[
-      first.attribute
-    ][
+    getMaterialResult(
+      first.attribute,
       second.attribute
-    ],
+    ),
 
     parents,
     parentSnapshot
@@ -161,11 +160,14 @@ export function addNormalToBoard(
   secondIndex,
   usedPairs
 ) {
+  const [orderedFirstIndex, orderedSecondIndex] =
+    [firstIndex, secondIndex].sort((a, b) => a - b);
+
   const first =
-    board[firstIndex];
+    board[orderedFirstIndex];
 
   const second =
-    board[secondIndex];
+    board[orderedSecondIndex];
 
   const targetIndex =
     board.findIndex(

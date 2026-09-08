@@ -1,7 +1,7 @@
 export const ATTRIBUTES = ['A', 'B', 'C', 'D'];
 
 export const ATTRIBUTE_NAMES = {
-  A: '金', B: '银', C: '铜', D: '铁', X: '熔体',
+  A: '酸', B: '碱', C: '盐', D: '晶', X: '琉璃',
 };
 
 // Rows are the first selection; columns are the second selection.
@@ -11,6 +11,9 @@ export const ADDITION_ATTRIBUTE = {
   C: { A: 'B', B: 'D', C: 'C', D: 'A' },
   D: { A: 'C', B: 'A', C: 'B', D: 'D' },
 };
+
+export const getMaterialResult = (firstMaterial, secondMaterial) =>
+  ADDITION_ATTRIBUTE[firstMaterial][secondMaterial];
 
 export const BOARD_SIZE = 9;
 export const MAX_NORMAL_VALUE = 101;

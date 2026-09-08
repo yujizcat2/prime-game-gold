@@ -5,7 +5,7 @@ import CollectionPanel from './components/CollectionPanel.jsx';
 import CombineHistoryPanel from './components/CombineHistoryPanel.jsx';
 import Hud from './components/Hud.jsx';
 import TestLab from './components/TestLab.jsx';
-import { ADDITION_ATTRIBUTE } from './game/constants.js';
+import { ATTRIBUTE_NAMES, getMaterialResult } from './game/constants.js';
 import { createInitialState } from './game/state.js';
 import {
   absorb,
@@ -24,12 +24,7 @@ const replaceTwo = (board, i, first, j, second) =>
     index === i ? first : index === j ? second : card
   );
 
-const ADD_LABEL = {
-  A: { A: '金', B: '铜', C: '铁', D: '银' },
-  B: { A: '铁', B: '银', C: '金', D: '铜' },
-  C: { A: '银', B: '铁', C: '铜', D: '金' },
-  D: { A: '铜', B: '金', C: '银', D: '铁' },
-};
+const CELL_NUMBERS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨'];
 
 export default function App() {
   const [game, setGame] = useState(() => createInitialState());
@@ -45,6 +40,17 @@ export default function App() {
   const selectedCards = game.selected
     .map((index) => game.board[index])
     .filter(Boolean);
+
+  const orderedSelectedIndexes = useMemo(
+    () => [...game.selected].sort((a, b) => a - b),
+    [game.selected]
+  );
+  const orderedSelectedCards = useMemo(
+    () => orderedSelectedIndexes
+      .map((index) => game.board[index])
+      .filter(Boolean),
+    [game.board, orderedSelectedIndexes]
+  );
 
   const later = (callback, delay) => {
     timers.current.push(
@@ -140,10 +146,8 @@ export default function App() {
       return null;
     }
 
-    const [
-      first,
-      second,
-    ] = selectedCards;
+    const [first, second] = orderedSelectedCards;
+    const [firstIndex, secondIndex] = orderedSelectedIndexes;
 
     const output = {};
 
@@ -161,16 +165,13 @@ export default function App() {
         first.value +
         second.value;
 
-      output.add =
-        value > 101
-          ? `相加 → 熔体 ${value}`
-          : `相加 → ${
-              ADD_LABEL[
-                first.attribute
-              ][
-                second.attribute
-              ]
-            } ${value}`;
+      const positionLabel =
+        `${CELL_NUMBERS[firstIndex]} ${ATTRIBUTE_NAMES[first.attribute]}` +
+        ` + ${CELL_NUMBERS[secondIndex]} ${ATTRIBUTE_NAMES[second.attribute]}`;
+
+      output.add = value > 101
+        ? `${positionLabel} → 琉璃 ${value}`
+        : `${positionLabel} → ${ATTRIBUTE_NAMES[getMaterialResult(first.attribute, second.attribute)]} ${value}`;
     }
 
     const divisor =
@@ -187,10 +188,10 @@ export default function App() {
     ) {
       output.process =
         `处理 → ` +
-        `${first.attribute}` +
+        `${ATTRIBUTE_NAMES[first.attribute]}` +
         `${first.value / divisor}` +
         ` / ` +
-        `${second.attribute}` +
+        `${ATTRIBUTE_NAMES[second.attribute]}` +
         `${second.value / divisor}`;
     }
 
@@ -205,13 +206,13 @@ export default function App() {
           second.value >
         201
           ? `吸收 → ${
-              second.attribute
+              ATTRIBUTE_NAMES[second.attribute]
             }${
               first.value +
               second.value -
               200
             }`
-          : `吸收 → 熔体 ${
+          : `吸收 → 琉璃 ${
               first.value +
               second.value
             }`;
@@ -221,7 +222,8 @@ export default function App() {
   }, [
     game.board,
     game.usedPairs,
-    selectedCards,
+    orderedSelectedCards,
+    orderedSelectedIndexes,
   ]);
 
   const boardPreview = useMemo(() => {
@@ -232,10 +234,7 @@ export default function App() {
       return null;
     }
 
-    const [
-      first,
-      second,
-    ] = selectedCards;
+    const [first, second] = orderedSelectedCards;
 
     const value =
       first.value +
@@ -263,11 +262,10 @@ export default function App() {
               kind: 'normal',
 
               attribute:
-                ADDITION_ATTRIBUTE[
-                  first.attribute
-                ][
+                getMaterialResult(
+                  first.attribute,
                   second.attribute
-                ],
+                ),
 
               value,
 
@@ -280,7 +278,7 @@ export default function App() {
   }, [
     game.board,
     preview,
-    selectedCards,
+    orderedSelectedCards,
   ]);
 
   function select(index) {
@@ -336,8 +334,8 @@ export default function App() {
 
     const historyRecord =
       createCombineHistoryRecord(
-        selectedCards[0],
-        selectedCards[1],
+        orderedSelectedCards[0],
+        orderedSelectedCards[1],
         outcome.result,
         game.steps + 1
       );
@@ -374,7 +372,7 @@ export default function App() {
 
         message:
           `生成 ` +
-          `${outcome.result.attribute}` +
+          `${ATTRIBUTE_NAMES[outcome.result.attribute]}` +
           `${outcome.result.value}`,
       }));
 
@@ -514,7 +512,7 @@ export default function App() {
                   result.collections
                     .map(
                       (card) =>
-                        `${card.attribute}${card.value}`
+                        `${ATTRIBUTE_NAMES[card.attribute]}${card.value}`
                     )
                     .join('、')
                 }`
@@ -593,9 +591,9 @@ export default function App() {
 
         message:
           result.kind === 'x'
-            ? `熔体变为 X${result.value}`
-            : `熔体循环为 ${
-                result.attribute
+            ? `琉璃变为 琉璃${result.value}`
+            : `琉璃循环为 ${
+                ATTRIBUTE_NAMES[result.attribute]
               }${result.value}`,
       }));
 
@@ -632,8 +630,8 @@ export default function App() {
         <div className="start-page-accent" aria-hidden="true" />
 
         <main className="start-panel">
-          <p className="start-subtitle">ALLOY PALACE</p>
-          <h1>合金新宫</h1>
+          <p className="start-subtitle">CRYSTAL PALACE</p>
+          <h1>炼晶新宫</h1>
           <button className="start-button" onClick={startGame}>
             开始游戏
           </button>
@@ -658,11 +656,11 @@ export default function App() {
         <header className="game-header">
           <div>
             <div className="game-header-kicker">
-              ALLOY PALACE
+              CRYSTAL PALACE
             </div>
 
             <h1>
-              合金新宫
+              炼晶新宫
             </h1>
           </div>
 

@@ -3,14 +3,41 @@ import { createNormalCard, createXCard, resetCardIdsForTest } from './cards.js';
 import { absorb, addNormalCards, addNormalToBoard, canAbsorb, canAdd, pairKey, processCards, settleCollection } from './rules.js';
 import { getNextSelection } from './selection.js';
 import { createCombineHistoryRecord } from './combineHistory.js';
+import { getMaterialResult } from './constants.js';
 
 beforeEach(resetCardIdsForTest);
 
 describe('normal addition', () => {
+  it('implements all 12 ordered material combinations', () => {
+    expect([
+      ['A', 'B', 'C'], ['B', 'A', 'D'],
+      ['A', 'C', 'D'], ['C', 'A', 'B'],
+      ['A', 'D', 'B'], ['D', 'A', 'C'],
+      ['B', 'C', 'A'], ['C', 'B', 'D'],
+      ['B', 'D', 'C'], ['D', 'B', 'A'],
+      ['C', 'D', 'A'], ['D', 'C', 'B'],
+    ].map(([first, second, result]) =>
+      getMaterialResult(first, second) === result
+    ).every(Boolean)).toBe(true);
+  });
+
   it('uses ordered attributes and creates X above 101', () => {
     expect(addNormalCards(createNormalCard(7, 'A'), createNormalCard(12, 'B')).attribute).toBe('C');
     expect(addNormalCards(createNormalCard(12, 'B'), createNormalCard(7, 'A')).attribute).toBe('D');
     expect(addNormalCards(createNormalCard(70, 'A'), createNormalCard(40, 'A')).kind).toBe('x');
+  });
+  it('uses board position rather than click order for material order', () => {
+    const acid = createNormalCard(7, 'A');
+    const alkali = createNormalCard(5, 'B');
+    const board = [acid, null, null, null, null, null, null, alkali, null];
+    const forward = addNormalToBoard(board, 0, 7, new Set());
+    const reverseClick = addNormalToBoard(board, 7, 0, new Set());
+
+    expect(forward.result).toMatchObject({ value: 12, attribute: 'C' });
+    expect(reverseClick.result).toMatchObject({ value: 12, attribute: 'C' });
+
+    const swappedBoard = [alkali, null, null, null, null, null, null, acid, null];
+    expect(addNormalToBoard(swappedBoard, 7, 0, new Set()).result.attribute).toBe('D');
   });
   it('shares a pair opportunity between both orders and blocks direct parents', () => {
     const a = createNormalCard(7, 'A'); const b = createNormalCard(12, 'B');

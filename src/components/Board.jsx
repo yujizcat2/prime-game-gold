@@ -28,6 +28,10 @@ export default function Board({
             }`}
             key={index}
           >
+            <span className="board-cell-index" aria-hidden="true">
+              {index + 1}
+            </span>
+
             {card ? (
               <Card
                 card={card}

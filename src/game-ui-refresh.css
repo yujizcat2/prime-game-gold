@@ -108,6 +108,22 @@ body {
   color: #526159;
 }
 
+.board-cell-index {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 30;
+  color: rgba(52, 67, 59, .34);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.candidate-markers {
+  top: 24px;
+}
+
 .game-page {
   position: relative;
   min-height: 100vh;
@@ -443,6 +459,16 @@ body {
 
   .start-panel h1 {
     margin-bottom: 56px;
+  }
+
+  .board-cell-index {
+    top: 7px;
+    right: 8px;
+    font-size: 8px;
+  }
+
+  .candidate-markers {
+    top: 21px;
   }
 
   body {
