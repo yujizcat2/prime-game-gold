@@ -33,6 +33,7 @@ const ADD_LABEL = {
 
 export default function App() {
   const [game, setGame] = useState(() => createInitialState());
+  const [hasStarted, setHasStarted] = useState(false);
   const [animation, setAnimation] = useState(null);
 
   const [showCollection, setShowCollection] = useState(false);
@@ -620,30 +621,52 @@ export default function App() {
     );
   }
 
+  function startGame() {
+    restartGame();
+    setHasStarted(true);
+  }
+
+  if (!hasStarted) {
+    return (
+      <div className="start-page">
+        <div className="start-page-accent" aria-hidden="true" />
+
+        <main className="start-panel">
+          <p className="start-subtitle">ALLOY PALACE</p>
+          <h1>合金新宫</h1>
+          <button className="start-button" onClick={startGame}>
+            开始游戏
+          </button>
+          <button
+            className="start-test-lab"
+            onClick={() => setShowTestLab(true)}
+          >
+            TestLab
+          </button>
+        </main>
+
+        {showTestLab && (
+          <TestLab onClose={() => setShowTestLab(false)} />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="game-page">
       <main className="game-shell">
         <header className="game-header">
           <div>
             <div className="game-header-kicker">
-              NUMBER COLLECTION
+              ALLOY PALACE
             </div>
 
             <h1>
-              Prime Game Gold
+              合金新宫
             </h1>
           </div>
 
           <div className="header-actions">
-            <button
-              className="test-lab-trigger"
-              onClick={() =>
-                setShowTestLab(true)
-              }
-            >
-              Test Lab
-            </button>
-
             <button
               className="history-trigger"
               onClick={() =>
@@ -846,15 +869,6 @@ export default function App() {
         />
       )}
 
-      {showTestLab && (
-        <TestLab
-          onClose={() =>
-            setShowTestLab(
-              false
-            )
-          }
-        />
-      )}
     </div>
   );
 }

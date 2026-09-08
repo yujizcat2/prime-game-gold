@@ -18,6 +18,96 @@ body {
   color: var(--pg-ink);
 }
 
+.start-page {
+  position: relative;
+  display: grid;
+  min-height: 100vh;
+  padding: 32px;
+  place-items: center;
+  overflow: hidden;
+  background: #f2f4f1;
+}
+
+.start-page-accent {
+  position: absolute;
+  width: min(62vw, 620px);
+  aspect-ratio: 1;
+  border: 1px solid rgba(60, 76, 68, .08);
+  border-radius: 38%;
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+.start-panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: min(100%, 420px);
+  min-height: 410px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 56px 42px;
+  border: 1px solid rgba(55, 69, 62, .10);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, .76);
+  box-shadow: 0 24px 70px rgba(43, 55, 49, .08);
+  backdrop-filter: blur(16px);
+  text-align: center;
+}
+
+.start-subtitle {
+  margin: 0 0 14px;
+  color: #9a8659;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .32em;
+}
+
+.start-panel h1 {
+  margin: 0 0 64px;
+  color: #202a25;
+  font-size: clamp(42px, 8vw, 58px);
+  font-weight: 850;
+  letter-spacing: .08em;
+  line-height: 1;
+}
+
+.start-button {
+  width: 100%;
+  min-height: 56px;
+  border: 1px solid #26372f;
+  border-radius: 14px;
+  background: #26372f;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  box-shadow: 0 10px 24px rgba(38, 55, 47, .14);
+  cursor: pointer;
+  transition: transform .16s ease, background .16s ease;
+}
+
+.start-button:hover {
+  background: #1e2d26;
+  transform: translateY(-1px);
+}
+
+.start-test-lab {
+  margin-top: 20px;
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  color: #929c97;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.start-test-lab:hover {
+  color: #526159;
+}
+
 .game-page {
   position: relative;
   min-height: 100vh;
@@ -337,6 +427,24 @@ body {
 }
 
 @media (max-width: 560px) {
+  .start-page {
+    padding: 20px;
+  }
+
+  .start-page-accent {
+    width: 88vw;
+  }
+
+  .start-panel {
+    min-height: 380px;
+    padding: 48px 28px;
+    border-radius: 24px;
+  }
+
+  .start-panel h1 {
+    margin-bottom: 56px;
+  }
+
   body {
     background:
       radial-gradient(circle at 50% -8%, rgba(204,180,116,.16), transparent 20rem),
