@@ -13,6 +13,7 @@ import {
   canAbsorb,
   canAdd,
   gcd,
+  getProcessLegality,
   processCards,
   settleCollection,
 } from './game/rules.js';
@@ -95,7 +96,8 @@ export default function App() {
           card.kind === 'normal'
             ? processCards(
                 first,
-                card
+                card,
+                game.collection
               )
             : null;
 
@@ -174,14 +176,10 @@ export default function App() {
         : `${positionLabel} → ${ATTRIBUTE_NAMES[getMaterialResult(first.attribute, second.attribute)]} ${value}`;
     }
 
-    const divisor =
-      first.kind === 'normal' &&
-      second.kind === 'normal'
-        ? gcd(
-            first.value,
-            second.value
-          )
-        : 1;
+    const processLegality = getProcessLegality(first, second, game.collection);
+    const divisor = processLegality.allowed
+      ? gcd(first.value, second.value)
+      : 1;
 
     if (
       divisor > 1
@@ -193,6 +191,10 @@ export default function App() {
         ` / ` +
         `${ATTRIBUTE_NAMES[second.attribute]}` +
         `${second.value / divisor}`;
+    }
+
+    if (!processLegality.allowed && processLegality.reason.startsWith('⚠')) {
+      output.warning = processLegality.reason;
     }
 
     if (
@@ -221,6 +223,7 @@ export default function App() {
     return output;
   }, [
     game.board,
+    game.collection,
     game.usedPairs,
     orderedSelectedCards,
     orderedSelectedIndexes,
@@ -283,7 +286,6 @@ export default function App() {
 
   function select(index) {
     if (
-      game.life <= 0 ||
       animation ||
       !game.board[index]
     ) {
@@ -400,10 +402,17 @@ export default function App() {
       return;
     }
 
+    const legality = getProcessLegality(
+      selectedCards[0],
+      selectedCards[1],
+      game.collection
+    );
+
     const result =
       processCards(
         selectedCards[0],
-        selectedCards[1]
+        selectedCards[1],
+        game.collection
       );
 
     if (!result) {
@@ -412,7 +421,7 @@ export default function App() {
           ...current,
 
           message:
-            '最大公约数必须大于 1。',
+            legality.reason,
         })
       );
     }
@@ -463,25 +472,18 @@ export default function App() {
 
     later(() => {
       setGame((current) => {
-        let {
-          life,
-          score,
-          collection,
-        } = current;
+        let { score, collection } = current;
 
         result.collections.forEach(
           (card) => {
-            ({
-              life,
-              score,
+            const settled = settleCollection(
               collection,
-            } =
-              settleCollection(
-                collection,
-                life,
-                score,
-                card
-              ));
+              current.life,
+              score,
+              card
+            );
+            score = settled.score;
+            collection = settled.collection;
           }
         );
 
@@ -499,7 +501,6 @@ export default function App() {
 
           selected: [],
 
-          life,
           score,
           collection,
 
@@ -702,17 +703,12 @@ export default function App() {
             message={
               game.message
             }
+            collection={game.collection}
           />
         </section>
 
         <section className="game-board-section">
           <div className="game-board">
-            {game.life <= 0 && (
-              <div className="game-over">
-                游戏结束
-              </div>
-            )}
-
             <Board
               board={
                 game.board
@@ -739,7 +735,6 @@ export default function App() {
                 runAdd
               }
               disabled={
-                game.life <= 0 ||
                 Boolean(
                   animation
                 )

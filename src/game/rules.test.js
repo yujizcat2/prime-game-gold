@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createNormalCard, createXCard, resetCardIdsForTest } from './cards.js';
-import { absorb, addNormalCards, addNormalToBoard, canAbsorb, canAdd, pairKey, processCards, settleCollection } from './rules.js';
+import { absorb, addNormalCards, addNormalToBoard, canAbsorb, canAdd, canProcessCards, getProcessLegality, pairKey, processCards, settleCollection } from './rules.js';
 import { getNextSelection } from './selection.js';
 import { createCombineHistoryRecord } from './combineHistory.js';
 import { getMaterialResult } from './constants.js';
@@ -73,6 +73,56 @@ it('processes by GCD and collects the pre-process card that becomes 1', () => {
   expect(result.first.value).toBe(7); expect(result.second).toBeNull(); expect(result.collections[0]).toBe(b);
 });
 
+describe('toxic card processing', () => {
+  const card = (value, attribute) => createNormalCard(value, attribute);
+
+  it('keeps ordinary processing unchanged', () => {
+    expect(canProcessCards(card(18, 'A'), card(24, 'B'), new Set())).toBe(true);
+  });
+
+  it('allows equal values with one or two toxic cards in either order', () => {
+    const collection = new Set(['A18', 'B18']);
+    const toxicAcid = card(18, 'A');
+    const toxicBase = card(18, 'B');
+    const normal = card(18, 'C');
+    expect(canProcessCards(toxicAcid, normal, collection)).toBe(true);
+    expect(canProcessCards(normal, toxicAcid, collection)).toBe(true);
+    expect(canProcessCards(toxicAcid, toxicBase, collection)).toBe(true);
+  });
+
+  it('allows a smaller reducible normal card in either order', () => {
+    const collection = new Set(['A18']);
+    const toxic = card(18, 'A');
+    const smaller = card(6, 'C');
+    expect(canProcessCards(toxic, smaller, collection)).toBe(true);
+    expect(canProcessCards(smaller, toxic, collection)).toBe(true);
+  });
+
+  it('rejects a larger normal card in either order with a specific reason', () => {
+    const collection = new Set(['A18']);
+    const toxic = card(18, 'A');
+    const larger = card(24, 'C');
+    expect(canProcessCards(toxic, larger, collection)).toBe(false);
+    expect(canProcessCards(larger, toxic, collection)).toBe(false);
+    expect(processCards(toxic, larger, collection)).toBeNull();
+    expect(processCards(larger, toxic, collection)).toBeNull();
+    expect(getProcessLegality(toxic, larger, collection).reason).toContain('毒卡不能');
+  });
+
+  it('rejects two toxic cards with different values', () => {
+    const collection = new Set(['A18', 'C6']);
+    expect(getProcessLegality(card(18, 'A'), card(6, 'C'), collection)).toMatchObject({
+      allowed: false,
+      reason: '⚠ 两张毒卡仅允许同数处理',
+    });
+  });
+
+  it('removes restrictions after all four materials are complete', () => {
+    const complete = new Set(['A18', 'B18', 'C18', 'D18']);
+    expect(canProcessCards(card(18, 'A'), card(24, 'C'), complete)).toBe(true);
+  });
+});
+
 it('binds absorbed values to one X and wraps above 201', () => {
   const x = createXCard(120); const seven = createNormalCard(7, 'A');
   const changed = absorb(x, seven);
@@ -109,8 +159,8 @@ it('records an over-101 result as X without reordering its parents', () => {
 it('settles new and duplicate collections', () => {
   const card = createNormalCard(37, 'D');
   const first = settleCollection(new Set(), 100, 0, card);
-  expect(first).toMatchObject({ life: 105, score: 37, isNew: true });
-  expect(settleCollection(first.collection, first.life, first.score, card)).toMatchObject({ life: 95, score: 37, isNew: false });
+  expect(first).toMatchObject({ life: 100, score: 37, isNew: true });
+  expect(settleCollection(first.collection, first.life, first.score, card)).toMatchObject({ life: 100, score: 37, isNew: false });
 });
 
 it('reaches the fixed score 20,600 for all 400 unique targets', () => {

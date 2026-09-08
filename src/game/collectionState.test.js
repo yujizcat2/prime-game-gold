@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { getMaterialDisplayState, getNumberCollectionState } from './collectionState.js';
+import { getMaterialDisplayState, getNumberCollectionState, isCardToxic } from './collectionState.js';
+import { createNormalCard } from './cards.js';
 
 describe('card collection display state', () => {
   it('shows the normal material without a warning when it is uncollected', () => {
@@ -25,6 +26,7 @@ describe('card collection display state', () => {
     const collection = new Set(['A17', 'B17', 'C17', 'D17']);
     const state = getMaterialDisplayState(17, 'A', collection);
     expect(state).toMatchObject({ displayName: '酸', isDuplicateRisk: false, isNumberComplete: true });
+    expect(isCardToxic(createNormalCard(17, 'A'), collection)).toBe(false);
   });
 
   it('recalculates from the current value, material, and collection', () => {

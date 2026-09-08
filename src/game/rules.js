@@ -9,6 +9,7 @@ import {
   createNormalCard,
   createXCard,
 } from './cards.js';
+import { isCardToxic } from './collectionState.js';
 
 
 /*
@@ -289,9 +290,10 @@ export function gcd(
  * ============================================================
  */
 
-export function processCards(
+export function getProcessLegality(
   a,
-  b
+  b,
+  collection = new Set()
 ) {
   if (
     !a ||
@@ -300,7 +302,7 @@ export function processCards(
     a.kind !== 'normal' ||
     b.kind !== 'normal'
   ) {
-    return null;
+    return { allowed: false, reason: '只能处理两张不同的普通卡。' };
   }
 
   const divisor =
@@ -312,8 +314,44 @@ export function processCards(
   if (
     divisor <= 1
   ) {
+    return { allowed: false, reason: '最大公约数必须大于 1。' };
+  }
+
+  const aToxic = isCardToxic(a, collection);
+  const bToxic = isCardToxic(b, collection);
+
+  if (aToxic && bToxic) {
+    return a.value === b.value
+      ? { allowed: true, reason: '' }
+      : { allowed: false, reason: '⚠ 两张毒卡仅允许同数处理' };
+  }
+
+  if (aToxic || bToxic) {
+    const toxic = aToxic ? a : b;
+    const normal = aToxic ? b : a;
+
+    return normal.value === toxic.value || normal.value < toxic.value
+      ? { allowed: true, reason: '' }
+      : { allowed: false, reason: '⚠ 毒卡不能处理比自己更大的数字' };
+  }
+
+  return { allowed: true, reason: '' };
+}
+
+export function canProcessCards(a, b, collection = new Set()) {
+  return getProcessLegality(a, b, collection).allowed;
+}
+
+export function processCards(
+  a,
+  b,
+  collection = new Set()
+) {
+  if (!canProcessCards(a, b, collection)) {
     return null;
   }
+
+  const divisor = gcd(a.value, b.value);
 
 
   const firstValue =
@@ -506,15 +544,9 @@ export function absorb(
  * 首次：
  * 同数字已有属性数量：
  *
- * 0个 → +5 Life
- * 1个 → +4
- * 2个 → +3
- * 3个 → +2
- *
  * 分数 += 数字。
  *
  * 重复：
- * -10 Life
  * 0 Score
  * ============================================================
  */
@@ -541,8 +573,7 @@ export function settleCollection(
     return {
       collection,
 
-      life:
-        life - 10,
+      life,
 
       score,
 
@@ -550,23 +581,6 @@ export function settleCollection(
         false,
     };
   }
-
-
-  /*
-   * 已经拥有该数字的几个其他属性。
-   */
-  const attributesOwned =
-    [
-      'A',
-      'B',
-      'C',
-      'D',
-    ].filter(
-      (attribute) =>
-        collection.has(
-          `${attribute}${card.value}`
-        )
-    ).length;
 
 
   const next =
@@ -584,12 +598,7 @@ export function settleCollection(
     collection:
       next,
 
-    life:
-      life +
-      (
-        5 -
-        attributesOwned
-      ),
+    life,
 
     score:
       score +

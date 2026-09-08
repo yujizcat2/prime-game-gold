@@ -5,6 +5,7 @@ import {
   addNormalToBoard,
   canAbsorb,
   canAdd,
+  canProcessCards,
   gcd,
   processCards,
   settleCollection,
@@ -177,12 +178,11 @@ export function getLegalTestActions(state) {
        */
       if (
         i < j &&
-        first.kind === 'normal' &&
-        second.kind === 'normal' &&
-        gcd(
-          first.value,
-          second.value
-        ) > 1
+        canProcessCards(
+          first,
+          second,
+          state.collection
+        )
       ) {
         actions.push({
           type: 'process',
@@ -297,15 +297,13 @@ function applyAction(
     const result =
       processCards(
         first,
-        second
+        second,
+        state.collection
       );
 
     if (!result) {
       return null;
     }
-
-    let life =
-      state.life;
 
     let score =
       state.score;
@@ -325,16 +323,13 @@ function applyAction(
       const settled =
         settleCollection(
           collection,
-          life,
+          state.life,
           score,
           card
         );
 
       collection =
         settled.collection;
-
-      life =
-        settled.life;
 
       score =
         settled.score;
@@ -389,8 +384,6 @@ function applyAction(
 
       board:
         nextBoard,
-
-      life,
 
       score,
 
@@ -827,13 +820,6 @@ function evaluateCollectionState(
   }
 
 
-  if (
-    state.life <= 0
-  ) {
-    return -1000000000;
-  }
-
-
   const actions =
     getLegalTestActions(
       state
@@ -1064,39 +1050,6 @@ function evaluateCollectionState(
     350;
 
 
-  /*
-   * ------------------------------------------------
-   * 11. 生命
-   * ------------------------------------------------
-   */
-
-  value +=
-    state.life *
-    65;
-
-
-  /*
-   * 生命进入危险区。
-   */
-
-  if (
-    state.life < 40
-  ) {
-    value -=
-      (40 - state.life) *
-      500;
-  }
-
-
-  if (
-    state.life < 20
-  ) {
-    value -=
-      (20 - state.life) *
-      1400;
-  }
-
-
   return value;
 }
 
@@ -1130,13 +1083,6 @@ function quickActionScore(
 
   const next =
     outcome.state;
-
-
-  if (
-    next.life <= 0
-  ) {
-    return -1000000000;
-  }
 
 
   const structure =
@@ -1565,8 +1511,7 @@ function chooseCollectionAction(
        */
 
       if (
-        node.state.collection.size >= 400 ||
-        node.state.life <= 0
+        node.state.collection.size >= 400
       ) {
         expanded.push(
           node
@@ -1773,7 +1718,6 @@ export function runTestGame({
 
 
   while (
-    state.life > 0 &&
     state.collection.size < 400 &&
     state.steps < maxSteps
   ) {
@@ -1866,11 +1810,6 @@ export function runTestGame({
     endReason =
       '完成400';
   } else if (
-    state.life <= 0
-  ) {
-    endReason =
-      '生命归零';
-  } else if (
     state.steps >= maxSteps
   ) {
     endReason =
@@ -1906,9 +1845,6 @@ export function runTestGame({
 
     score:
       state.score,
-
-    life:
-      state.life,
 
     newCollections:
       stats.newCollections,
@@ -2060,12 +1996,6 @@ export function summarizeTestResults(
         'score'
       ),
 
-    averageLife:
-      average(
-        results,
-        'life'
-      ),
-
     averageNew:
       average(
         results,
@@ -2136,11 +2066,6 @@ export function summarizeTestResults(
     completed:
       endReasons[
         '完成400'
-      ] ?? 0,
-
-    deaths:
-      endReasons[
-        '生命归零'
       ] ?? 0,
 
     deadBoards:

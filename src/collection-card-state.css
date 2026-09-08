@@ -300,6 +300,14 @@
     0 5px 12px rgba(121, 77, 24, .08);
 }
 
+.board-piece--duplicate-risk .board-piece-number {
+  color: #c43d3d;
+}
+
+.board-piece--duplicate-risk.board-piece--selected .board-piece-number {
+  color: #ffb3b3;
+}
+
 @media (max-width: 560px) {
   .board-piece-collection-progress {
     gap: 2px;

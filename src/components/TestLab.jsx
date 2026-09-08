@@ -360,17 +360,6 @@ export default function TestLab({
 
                 <div>
                   <small>
-                    平均生命
-                  </small>
-                  <b>
-                    {formatNumber(
-                      summary.averageLife
-                    )}
-                  </b>
-                </div>
-
-                <div>
-                  <small>
                     平均新收藏
                   </small>
                   <b>
@@ -484,13 +473,6 @@ export default function TestLab({
                   400/400：
                   <b>
                     {summary.completed}
-                  </b>
-                </span>
-
-                <span>
-                  生命归零：
-                  <b>
-                    {summary.deaths}
                   </b>
                 </span>
 
@@ -628,11 +610,6 @@ export default function TestLab({
               <span>
                 分数{' '}
                 {selectedGame.score}
-              </span>
-
-              <span>
-                生命{' '}
-                {selectedGame.life}
               </span>
 
               <span>

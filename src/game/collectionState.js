@@ -24,3 +24,10 @@ export function getMaterialDisplayState(value, attribute, collection = new Set()
     displayName: `${isDuplicateRisk ? '毒' : ''}${ATTRIBUTE_NAMES[attribute]}`,
   };
 }
+
+export function isCardToxic(card, collection = new Set()) {
+  return Boolean(
+    card?.kind === 'normal' &&
+    getMaterialDisplayState(card.value, card.attribute, collection).isDuplicateRisk
+  );
+}
