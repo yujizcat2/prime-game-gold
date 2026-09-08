@@ -122,6 +122,98 @@ export const POISON_SCORE_WEIGHTS = Object.freeze({
   deadBoard: -10000000,
 });
 
+function stableValue(value) {
+  if (Array.isArray(value)) return value.map(stableValue);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.keys(value).sort().map((key) => [key, stableValue(value[key])])
+    );
+  }
+  return value ?? null;
+}
+
+function lineageCard(card, includeCardId) {
+  if (!card) return null;
+  return {
+    ...(includeCardId ? { id: card.id } : {}),
+    kind: card.kind,
+    value: card.value,
+    attribute: card.attribute,
+    parents: [...(card.parents ?? [])],
+    parentSnapshot: stableValue(card.parentSnapshot ?? []),
+    absorbedValues: [...(card.absorbedValues ?? [])],
+    origin: stableValue(card.origin),
+  };
+}
+
+export function createBoardFunctionalFingerprint(state) {
+  return JSON.stringify(state.board.map((card, index) => ({
+    index,
+    card: card ? { value: card.value, attribute: card.attribute } : null,
+  })));
+}
+
+export function createBoardLineageStructureFingerprint(state) {
+  return JSON.stringify(state.board.map((card, index) => ({
+    index,
+    card: lineageCard(card, false),
+  })));
+}
+
+export function createBoardLineageFingerprint(state) {
+  return JSON.stringify(state.board.map((card, index) => ({
+    index,
+    card: lineageCard(card, true),
+  })));
+}
+
+export function createFullSimulationFingerprint(state) {
+  return JSON.stringify({
+    board: state.board.map((card, index) => ({ index, card: lineageCard(card, true) })),
+    collection: [...state.collection].sort(),
+    usedPairs: [...state.usedPairs].sort(),
+  });
+}
+
+const LOOP_LAYERS = {
+  functional: createBoardFunctionalFingerprint,
+  lineageStructure: createBoardLineageStructureFingerprint,
+  lineageInstance: createBoardLineageFingerprint,
+  fullState: createFullSimulationFingerprint,
+};
+
+export function createLoopDetector() {
+  const seen = Object.fromEntries(Object.keys(LOOP_LAYERS).map((key) => [key, new Map()]));
+  const result = Object.fromEntries(Object.keys(LOOP_LAYERS).map((key) => [key, {
+    firstLoop: null,
+    shortestPeriod: null,
+    repeatCount: 0,
+  }]));
+
+  return {
+    record(state, step = state.steps ?? 0) {
+      for (const [key, fingerprint] of Object.entries(LOOP_LAYERS)) {
+        const value = fingerprint(state);
+        const firstStep = seen[key].get(value);
+        if (firstStep === undefined) {
+          seen[key].set(value, step);
+          continue;
+        }
+        const period = step - firstStep;
+        const layer = result[key];
+        layer.repeatCount += 1;
+        layer.shortestPeriod = layer.shortestPeriod === null
+          ? period
+          : Math.min(layer.shortestPeriod, period);
+        layer.firstLoop ??= { firstStep, repeatStep: step, period };
+      }
+    },
+    snapshot() {
+      return structuredClone(result);
+    },
+  };
+}
+
 
 /*
  * ============================================================
@@ -1785,6 +1877,9 @@ export function runTestGame({
       random
     );
 
+  const loopDetector = createLoopDetector();
+  loopDetector.record(state, 0);
+
 
   const stats = {
     combine: 0,
@@ -1863,6 +1958,8 @@ export function runTestGame({
 
     state =
       outcome.state;
+
+    loopDetector.record(state, state.steps);
 
     const toxicAfter = countToxicCards(state);
     stats.toxicCreated += Math.max(0, toxicAfter - toxicBefore);
@@ -1969,6 +2066,9 @@ export function runTestGame({
     completedNumbers:
       countCompletedNumbers(state.collection),
 
+    loops:
+      loopDetector.snapshot(),
+
     combine:
       stats.combine,
 
@@ -2054,6 +2154,7 @@ function average(
 export function summarizeTestResults(
   results
 ) {
+  const functionalLoops = results.filter((result) => result.loops?.functional.firstLoop);
   const totalCollectionEvents =
     results.reduce(
       (sum, result) =>
@@ -2136,6 +2237,28 @@ export function summarizeTestResults(
 
     averageCompletedNumbers:
       average(results, 'completedNumbers'),
+
+    functionalLoopGames:
+      functionalLoops.length,
+
+    lineageLoopGames:
+      results.filter((result) => result.loops?.lineageStructure.firstLoop).length,
+
+    exactLineageLoopGames:
+      results.filter((result) => result.loops?.lineageInstance.firstLoop).length,
+
+    fullStateLoopGames:
+      results.filter((result) => result.loops?.fullState.firstLoop).length,
+
+    averageFirstLoopStep:
+      functionalLoops.length
+        ? functionalLoops.reduce((sum, result) => sum + result.loops.functional.firstLoop.repeatStep, 0) / functionalLoops.length
+        : 0,
+
+    averageShortestPeriod:
+      functionalLoops.length
+        ? functionalLoops.reduce((sum, result) => sum + result.loops.functional.shortestPeriod, 0) / functionalLoops.length
+        : 0,
 
     duplicateRate:
       totalCollectionEvents > 0

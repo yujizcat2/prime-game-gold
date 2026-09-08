@@ -3,6 +3,11 @@ import { createNormalCard, resetCardIdsForTest } from './cards.js';
 import { getProcessLegality } from './rules.js';
 import {
   choosePoisonCollectionAction,
+  createBoardFunctionalFingerprint,
+  createBoardLineageFingerprint,
+  createBoardLineageStructureFingerprint,
+  createFullSimulationFingerprint,
+  createLoopDetector,
   runTestGame,
   scorePoisonCollectionAction,
   summarizeTestResults,
@@ -17,6 +22,54 @@ const stateWith = (board, collection = new Set()) => ({
   score: 0,
   steps: 0,
   life: 100,
+});
+
+describe('simulation fingerprints', () => {
+  const fingerprintState = (board, overrides = {}) => ({
+    ...stateWith(board),
+    ...overrides,
+  });
+
+  it('matches identical positioned values and materials but not moved cards', () => {
+    const first = fingerprintState([createNormalCard(9, 'D'), null, createNormalCard(18, 'D')]);
+    const same = fingerprintState([createNormalCard(9, 'D'), null, createNormalCard(18, 'D')]);
+    const moved = fingerprintState([null, createNormalCard(9, 'D'), createNormalCard(18, 'D')]);
+    expect(createBoardFunctionalFingerprint(first)).toBe(createBoardFunctionalFingerprint(same));
+    expect(createBoardFunctionalFingerprint(first)).not.toBe(createBoardFunctionalFingerprint(moved));
+  });
+
+  it('distinguishes parent structure and exact card instances separately', () => {
+    const base = createNormalCard(12, 'C', ['parent-1'], [{ value: 5, attribute: 'A' }, { value: 7, attribute: 'B' }]);
+    const newInstance = { ...base, id: 'different-card-id' };
+    const newParent = { ...newInstance, parents: ['parent-2'] };
+    const first = fingerprintState([base]);
+    const sameStructure = fingerprintState([newInstance]);
+    const differentStructure = fingerprintState([newParent]);
+
+    expect(createBoardFunctionalFingerprint(first)).toBe(createBoardFunctionalFingerprint(differentStructure));
+    expect(createBoardLineageStructureFingerprint(first)).toBe(createBoardLineageStructureFingerprint(sameStructure));
+    expect(createBoardLineageFingerprint(first)).not.toBe(createBoardLineageFingerprint(sameStructure));
+    expect(createBoardLineageStructureFingerprint(first)).not.toBe(createBoardLineageStructureFingerprint(differentStructure));
+  });
+
+  it('detects a seven-step functional period', () => {
+    const detector = createLoopDetector();
+    const state = fingerprintState([createNormalCard(9, 'D')]);
+    detector.record(state, 10);
+    detector.record(state, 17);
+    expect(detector.snapshot().functional).toMatchObject({
+      firstLoop: { firstStep: 10, repeatStep: 17, period: 7 },
+      shortestPeriod: 7,
+      repeatCount: 1,
+    });
+  });
+
+  it('excludes telemetry from the full-state fingerprint', () => {
+    const card = createNormalCard(9, 'D');
+    const first = fingerprintState([card], { steps: 10, score: 20, history: ['a'] });
+    const later = fingerprintState([card], { steps: 99, score: 999, history: ['a', 'b'] });
+    expect(createFullSimulationFingerprint(first)).toBe(createFullSimulationFingerprint(later));
+  });
 });
 
 it('does not use or report life as a simulation terminal condition', () => {

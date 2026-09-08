@@ -25,6 +25,11 @@ function formatNumber(
   );
 }
 
+function formatLoop(layer) {
+  if (!layer.firstLoop) return '否';
+  return `是 · 首次 Step ${layer.firstLoop.firstStep} → ${layer.firstLoop.repeatStep} · 周期 ${layer.firstLoop.period} · 重复 ${layer.repeatCount} 次`;
+}
+
 export default function TestLab({
   onClose,
 }) {
@@ -405,6 +410,13 @@ export default function TestLab({
                   <b>{formatNumber(summary.averageCompletedNumbers)}</b>
                 </div>
 
+                <div><small>功能循环局数</small><b>{summary.functionalLoopGames}</b></div>
+                <div><small>父母结构循环局数</small><b>{summary.lineageLoopGames}</b></div>
+                <div><small>具体实例循环局数</small><b>{summary.exactLineageLoopGames}</b></div>
+                <div><small>完整状态循环局数</small><b>{summary.fullStateLoopGames}</b></div>
+                <div><small>平均首次循环 Step</small><b>{formatNumber(summary.averageFirstLoopStep)}</b></div>
+                <div><small>平均最短周期</small><b>{formatNumber(summary.averageShortestPeriod)}</b></div>
+
                 <div>
                   <small>
                     重复率
@@ -687,6 +699,17 @@ export default function TestLab({
                 {selectedGame.maxNumberSeen}
               </span>
             </div>
+
+            <section className="test-loop-detail">
+              <h3>循环检测</h3>
+              <p>功能盘面循环：{formatLoop(selectedGame.loops.functional)} · 最短 {selectedGame.loops.functional.shortestPeriod ?? '—'}</p>
+              <p>父母结构循环：{formatLoop(selectedGame.loops.lineageStructure)}</p>
+              <p>具体卡片实例循环：{formatLoop(selectedGame.loops.lineageInstance)}</p>
+              <p>完整未来状态循环：{formatLoop(selectedGame.loops.fullState)}</p>
+              {selectedGame.loops.functional.firstLoop && !selectedGame.loops.lineageStructure.firstLoop && (
+                <p>功能盘面重复，但 lineage 不同。</p>
+              )}
+            </section>
 
             <div className="test-history">
               {selectedGame.history.length
