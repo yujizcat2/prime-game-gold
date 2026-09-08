@@ -84,8 +84,9 @@ export default function TestLab({
       [results]
     );
 
-  const modeName =
-    mode === 'collection'
+  const modeName = mode === 'poison-collection'
+    ? 'Poison Collection AI'
+    : mode === 'collection'
       ? 'Collection AI'
       : 'Random AI';
 
@@ -136,7 +137,7 @@ export default function TestLab({
        * 每局都给浏览器一次刷新机会。
        */
       if (
-        mode === 'collection' ||
+        mode !== 'random' ||
         (i + 1) % 10 === 0
       ) {
         setResults([
@@ -210,6 +211,10 @@ export default function TestLab({
 
               <option value="collection">
                 Collection AI
+              </option>
+
+              <option value="poison-collection">
+                Poison Collection AI
               </option>
             </select>
           </label>
@@ -378,6 +383,26 @@ export default function TestLab({
                       summary.averageDuplicates
                     )}
                   </b>
+                </div>
+
+                <div>
+                  <small>平均产生毒卡</small>
+                  <b>{formatNumber(summary.averageToxicCreated)}</b>
+                </div>
+
+                <div>
+                  <small>平均解除毒卡</small>
+                  <b>{formatNumber(summary.averageToxicRemoved)}</b>
+                </div>
+
+                <div>
+                  <small>平均最终毒卡</small>
+                  <b>{formatNumber(summary.averageFinalToxic)}</b>
+                </div>
+
+                <div>
+                  <small>平均完成数字</small>
+                  <b>{formatNumber(summary.averageCompletedNumbers)}</b>
                 </div>
 
                 <div>
@@ -626,6 +651,11 @@ export default function TestLab({
                 重复{' '}
                 {selectedGame.duplicates}
               </span>
+
+              <span>产生毒卡 {selectedGame.toxicCreated}</span>
+              <span>解除毒卡 {selectedGame.toxicRemoved}</span>
+              <span>最终毒卡 {selectedGame.finalToxic}</span>
+              <span>完成数字 {selectedGame.completedNumbers}</span>
 
               <span>
                 相加{' '}

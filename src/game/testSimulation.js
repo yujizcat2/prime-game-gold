@@ -1,4 +1,5 @@
 import { ATTRIBUTE_NAMES } from './constants.js';
+import { getNumberCollectionState, isCardToxic } from './collectionState.js';
 import { createInitialState } from './state.js';
 import {
   absorb,
@@ -85,6 +86,41 @@ function emptyCount(board) {
 function collectionKey(card) {
   return `${card.attribute}${card.value}`;
 }
+
+function countToxicCards(state) {
+  return state.board.filter((card) => isCardToxic(card, state.collection)).length;
+}
+
+function countCompletedNumbers(collection) {
+  let completed = 0;
+  for (let value = 2; value <= 101; value += 1) {
+    if (getNumberCollectionState(value, collection).isNumberComplete) completed += 1;
+  }
+  return completed;
+}
+
+function countTrappedToxicCards(state) {
+  return state.board.reduce((count, card, index) => {
+    if (!isCardToxic(card, state.collection)) return count;
+    const hasExit = state.board.some((other, otherIndex) =>
+      otherIndex !== index && canProcessCards(card, other, state.collection)
+    );
+    return count + (hasExit ? 0 : 1);
+  }, 0);
+}
+
+export const POISON_SCORE_WEIGHTS = Object.freeze({
+  newCollection: 4200,
+  numberProgress: 600,
+  numberComplete: 12000,
+  toxicRemoved: 3000,
+  toxicAdded: -3800,
+  trappedToxic: -2600,
+  incompleteDuplicate: -4200,
+  completeDuplicate: -500,
+  legalAction: 55,
+  deadBoard: -10000000,
+});
 
 
 /*
@@ -1641,6 +1677,65 @@ function chooseCollectionAction(
   ].firstAction;
 }
 
+export function scorePoisonCollectionAction(state, action) {
+  const outcome = applyAction(state, action, null, false);
+  if (!outcome) return -Infinity;
+
+  const next = outcome.state;
+  const weights = POISON_SCORE_WEIGHTS;
+  const toxicBefore = countToxicCards(state);
+  const toxicAfter = countToxicCards(next);
+  const legalActions = getLegalTestActions(next).length;
+  const newKeys = [...next.collection].filter((key) => !state.collection.has(key));
+  const progress = newKeys.reduce((sum, key) => {
+    const value = Number(key.slice(1));
+    return sum + getNumberCollectionState(value, state.collection)
+      .materials.filter((material) => material.collected).length;
+  }, 0);
+  const completed = countCompletedNumbers(next.collection) -
+    countCompletedNumbers(state.collection);
+
+  let duplicatePenalty = 0;
+  if (outcome.duplicateCollections > 0 && action.type === 'process') {
+    const result = processCards(
+      state.board[action.firstIndex],
+      state.board[action.secondIndex],
+      state.collection
+    );
+    duplicatePenalty = result.collections
+      .filter((card) => state.collection.has(collectionKey(card)))
+      .reduce((sum, card) => sum + (
+        getNumberCollectionState(card.value, state.collection).isNumberComplete
+          ? weights.completeDuplicate
+          : weights.incompleteDuplicate
+      ), 0);
+  }
+
+  return quickActionScore(state, action) +
+    newKeys.length * weights.newCollection +
+    progress * weights.numberProgress +
+    completed * weights.numberComplete +
+    Math.max(0, toxicBefore - toxicAfter) * weights.toxicRemoved +
+    Math.max(0, toxicAfter - toxicBefore) * weights.toxicAdded +
+    countTrappedToxicCards(next) * weights.trappedToxic +
+    duplicatePenalty +
+    legalActions * weights.legalAction +
+    (legalActions === 0 ? weights.deadBoard : 0);
+}
+
+export function choosePoisonCollectionAction(state, random = Math.random) {
+  const actions = getLegalTestActions(state);
+  if (!actions.length) return null;
+
+  const scored = actions.map((action) => ({
+    action,
+    score: scorePoisonCollectionAction(state, action),
+  }));
+  const bestScore = Math.max(...scored.map((item) => item.score));
+  const best = scored.filter((item) => item.score === bestScore);
+  return best[Math.floor(random() * best.length)].action;
+}
+
 
 /*
  * ============================================================
@@ -1704,6 +1799,10 @@ export function runTestGame({
 
     duplicates: 0,
 
+    toxicCreated: 0,
+
+    toxicRemoved: 0,
+
     boardSumTotal: 0,
 
     boardSumSamples: 0,
@@ -1724,9 +1823,9 @@ export function runTestGame({
     let action;
 
 
-    if (
-      mode === 'collection'
-    ) {
+    if (mode === 'poison-collection') {
+      action = choosePoisonCollectionAction(state, random);
+    } else if (mode === 'collection') {
       action =
         chooseCollectionAction(
           state,
@@ -1746,6 +1845,8 @@ export function runTestGame({
     }
 
 
+    const toxicBefore = countToxicCards(state);
+
     const outcome =
       applyAction(
         state,
@@ -1762,6 +1863,10 @@ export function runTestGame({
 
     state =
       outcome.state;
+
+    const toxicAfter = countToxicCards(state);
+    stats.toxicCreated += Math.max(0, toxicAfter - toxicBefore);
+    stats.toxicRemoved += Math.max(0, toxicBefore - toxicAfter);
 
 
     const currentBoardSum =
@@ -1851,6 +1956,18 @@ export function runTestGame({
 
     duplicates:
       stats.duplicates,
+
+    toxicCreated:
+      stats.toxicCreated,
+
+    toxicRemoved:
+      stats.toxicRemoved,
+
+    finalToxic:
+      countToxicCards(state),
+
+    completedNumbers:
+      countCompletedNumbers(state.collection),
 
     combine:
       stats.combine,
@@ -2007,6 +2124,18 @@ export function summarizeTestResults(
         results,
         'duplicates'
       ),
+
+    averageToxicCreated:
+      average(results, 'toxicCreated'),
+
+    averageToxicRemoved:
+      average(results, 'toxicRemoved'),
+
+    averageFinalToxic:
+      average(results, 'finalToxic'),
+
+    averageCompletedNumbers:
+      average(results, 'completedNumbers'),
 
     duplicateRate:
       totalCollectionEvents > 0
