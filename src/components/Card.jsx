@@ -1,4 +1,5 @@
-import { ATTRIBUTE_NAMES, ATTRIBUTES } from '../game/constants.js';
+import { ATTRIBUTE_NAMES } from '../game/constants.js';
+import { getMaterialDisplayState } from '../game/collectionState.js';
 
 export default function Card({
   card,
@@ -39,6 +40,10 @@ export default function Card({
       animation.targetIndex === index
     );
 
+  const collectionState = card.kind === 'normal'
+    ? getMaterialDisplayState(card.value, card.attribute, collection)
+    : null;
+
   const classes = [
     'board-piece',
     `board-piece--${card.attribute}`,
@@ -48,6 +53,8 @@ export default function Card({
     candidate?.process ? 'board-piece--reduce-candidate' : '',
     candidate?.collect ? 'board-piece--collection-candidate' : '',
     candidate?.absorb ? 'board-piece--absorb-candidate' : '',
+    collectionState?.isDuplicateRisk ? 'board-piece--duplicate-risk' : '',
+    collectionState?.isNumberComplete ? 'board-piece--number-complete' : '',
     isSource ? 'board-piece--combine-source' : '',
     isCompress ? 'board-piece--reduce-compress' : '',
     isExit ? 'board-piece--reduce-auto-exit' : '',
@@ -72,80 +79,40 @@ export default function Card({
           .join(' + ')
       : '原生';
 
-  /*
-   * ============================================================
-   * 收藏状态角标
-   * ============================================================
-   *
-   * ×
-   * 当前 数字 + 当前系 已收藏
-   *
-   * △
-   * 当前系没收藏，
-   * 但同一个数字的其他系至少一个已收藏
-   *
-   * X 不参与收藏角标
-   * ============================================================
-   */
-
-  let collectionMarker = null;
-
-  if (
-    card.kind === 'normal' &&
-    collection
-  ) {
-    const exactKey =
-      `${card.attribute}${card.value}`;
-
-    const exactCollected =
-      collection.has(exactKey);
-
-    if (exactCollected) {
-      collectionMarker = '×';
-    } else {
-      const otherAttributeCollected =
-        ATTRIBUTES.some(
-          (attribute) =>
-            attribute !== card.attribute &&
-            collection.has(
-              `${attribute}${card.value}`
-            )
-        );
-
-      if (otherAttributeCollected) {
-        collectionMarker = '△';
-      }
-    }
-  }
-
   const content = (
     <>
       <span className="board-piece-type-bar" />
-
-      {collectionMarker && (
-        <span
-          className={`board-piece-collection-marker ${
-            collectionMarker === '×'
-              ? 'board-piece-collection-marker--exact'
-              : 'board-piece-collection-marker--related'
-          }`}
-          aria-label={
-            collectionMarker === '×'
-              ? '该属性数字已收藏'
-              : '该数字其他属性已收藏'
-          }
-        >
-          {collectionMarker}
-        </span>
-      )}
 
       <strong className="board-piece-number">
         {card.value}
       </strong>
 
       <span className="board-piece-attribute">
-        {ATTRIBUTE_NAMES[card.attribute]}
+        {collectionState?.displayName ?? ATTRIBUTE_NAMES[card.attribute]}
+        {collectionState?.isDuplicateRisk && (
+          <b className="board-piece-warning" aria-label="重复收藏风险">⚠</b>
+        )}
       </span>
+
+      {collectionState && (
+        <span
+          className={`board-piece-collection-progress ${
+            collectionState.isNumberComplete ? 'is-complete' : ''
+          }`}
+          aria-label={`${card.value}的四系收藏进度`}
+        >
+          {collectionState.materials.map((material) => (
+            <i
+              className={material.collected ? 'is-collected' : ''}
+              key={material.attribute}
+              title={`${card.value}${material.name}${material.collected ? '已收藏' : '未收藏'}`}
+            >
+              {material.name}
+            </i>
+          ))}
+          {collectionState.isNumberComplete && <em aria-label="四系完成">✓</em>}
+        </span>
+      )}
 
       <small className="board-piece-source">
         {source}
@@ -218,7 +185,7 @@ export default function Card({
           type="button"
           className={classes}
           disabled={disabled}
-          aria-label={`即将相加，生成${ATTRIBUTE_NAMES[card.attribute]} ${card.value}`}
+          aria-label={`即将相加，生成${collectionState?.displayName ?? ATTRIBUTE_NAMES[card.attribute]} ${card.value}`}
           onClick={(event) => {
             event.stopPropagation();
             onPreviewAdd?.();
@@ -235,7 +202,7 @@ export default function Card({
           className={classes}
           onClick={onSelect}
           disabled={disabled}
-          aria-label={`${ATTRIBUTE_NAMES[card.attribute]} ${card.value}`}
+          aria-label={`${collectionState?.displayName ?? ATTRIBUTE_NAMES[card.attribute]} ${card.value}${collectionState?.isDuplicateRisk ? '，重复收藏风险' : ''}`}
         >
           {content}
         </button>

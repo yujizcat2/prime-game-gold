@@ -236,6 +236,83 @@
   }
 }
 
+/* 当前数字的酸 / 碱 / 盐 / 晶收藏进度 */
+.board-piece-collection-progress {
+  position: absolute;
+  top: 54%;
+  left: 50%;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 5px;
+  border: 1px solid rgba(31, 40, 36, .08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .42);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.board-piece-collection-progress i {
+  display: grid;
+  width: 17px;
+  height: 17px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(70, 82, 76, .08);
+  color: rgba(70, 82, 76, .38);
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.board-piece-collection-progress i.is-collected {
+  background: var(--material-primary);
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(31, 40, 36, .16);
+}
+
+.board-piece-collection-progress.is-complete {
+  border-color: color-mix(in srgb, var(--material-primary) 32%, transparent);
+  background: rgba(255, 255, 255, .72);
+}
+
+.board-piece-collection-progress em {
+  color: var(--material-primary);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 950;
+}
+
+.board-piece-warning {
+  margin-left: 4px;
+  color: #a46520;
+  font-size: .78em;
+  line-height: 1;
+}
+
+.board-piece--duplicate-risk:not(.board-piece--selected) {
+  border-color: rgba(164, 101, 32, .34);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 244, 222, .48),
+    0 2px 0 rgba(15, 23, 42, .05),
+    0 5px 12px rgba(121, 77, 24, .08);
+}
+
+@media (max-width: 560px) {
+  .board-piece-collection-progress {
+    gap: 2px;
+    padding: 2px 4px;
+  }
+
+  .board-piece-collection-progress i {
+    width: 15px;
+    height: 15px;
+    font-size: 7px;
+  }
+}
+
 @media (max-width: 380px) {
   .board-piece-collection-marker {
     top: 6px;
